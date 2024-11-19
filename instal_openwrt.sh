@@ -195,7 +195,7 @@ function default_settings() {
   MAC=$GEN_MAC
   LAN_MAC=$GEN_MAC_LAN
   LAN_BRG="vmbr2"
-  LAN_IP_ADDR="29.1.1.1"
+  LAN_IP_ADDR="29.1.1.100"
   LAN_NETMASK="255.255.255.0"
   MTU=""
   START_VM="yes"
@@ -283,7 +283,7 @@ function advanced_settings() {
 
   if LAN_IP_ADDR=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Set a router IP" 8 58 $LAN_IP_ADDR --title "LAN IP ADDRESS" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
     if [ -z $LAN_IP_ADDR ]; then
-      LAN_IP_ADDR="29.1.1.1"
+      LAN_IP_ADDR="29.1.1.100"
     fi
     echo -e "${DGN}Using LAN IP ADDRESS: ${BGN}$LAN_IP_ADDR${CL}"
   else
@@ -333,9 +333,9 @@ function advanced_settings() {
     exit-script
   fi
 
-  if VLAN2=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Set a LAN Vlan" 8 58 291 --title "LAN VLAN" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
+  if VLAN2=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Set a LAN Vlan" 8 58 --title "LAN VLAN" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
     if [ -z $VLAN2 ]; then
-      VLAN2="291"
+      VLAN2=""
       LAN_VLAN=",tag=$VLAN2"
     else
       LAN_VLAN=",tag=$VLAN2"
@@ -498,8 +498,8 @@ until qm status $VMID | grep -q "stopped"; do
 done
 msg_info "Bridge interfaces are being added."
 qm set $VMID \
-  -net0 virtio,bridge=${LAN_BRG},macaddr=${LAN_MAC}${LAN_VLAN}${MTU} \
-  -net1 virtio,bridge=${BRG},macaddr=${MAC}${VLAN}${MTU} >/dev/null 2>/dev/null
+  -net0 virtio,bridge=${BRG},macaddr=${MAC}${VLAN}${MTU} >/dev/null 2>/dev/null \
+  -net1 virtio,bridge=${LAN_BRG},macaddr=${LAN_MAC}${LAN_VLAN}${MTU}
 msg_ok "Bridge interfaces have been successfully added."
 if [ "$START_VM" == "yes" ]; then
   msg_info "Starting OpenWrt VM"
@@ -507,7 +507,7 @@ if [ "$START_VM" == "yes" ]; then
   msg_ok "Started OpenWrt VM"
 fi
 VLAN_FINISH=""
-if [ "$VLAN" == "" ] && [ "$VLAN2" != "291" ]; then
+if [ "$VLAN" == "" ] && [ "$VLAN2" != "" ]; then
   VLAN_FINISH=" Please remember to adjust the VLAN tags to suit your network."
 fi
 msg_ok "Completed Successfully!\n${VLAN_FINISH}"
